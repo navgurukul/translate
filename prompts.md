@@ -1,0 +1,1 @@
+- Provide an easy to read translation in Hindi. Break longer sentences into shorter ones if needed to make it more readable but keep the meaning and key words intact. 
