@@ -30,21 +30,21 @@ def replace_phrases(text):
 
 def translate_paragraph(paragraph, target_language='hindi'):
     # Prepare the system message
-    system_message = {
-        "role": "system",
-        "content": "You are an expert translator specializing in spiritual books. Break longer sentences into shorter ones if needed to make it more readable but keep the meaning and key words intact. Provide the best translation to " + target_language + "."
-    }
+    # system_message = {
+    #     "role": "system",
+    #     "content": "
+    # }
 
     # Prepare the user message with the paragraph to translate
     user_message = {
         "role": "user",
-        "content": paragraph
+        "content": "Provide an easy to read translation in  " + target_language + ". Break longer sentences into shorter ones if needed to make it more readable but keep the meaning and key words intact.\n\n" + paragraph
     }
 
     # Generate translation using ChatGPT
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[system_message, user_message],
+        model="gpt-4",
+        messages=[user_message],
         max_tokens=3900,
         temperature=0.7,
         n=1,
@@ -67,8 +67,12 @@ def output_translation(input_path, output_path, target_language='en'):
 
     # Iterate over paragraphs in the input document
     for paragraph in doc.paragraphs:
+        text=paragraph.text.strip()
+        if text=='':
+            continue
+
         # Replace phrases in the paragraph before translation
-        replaced_paragraph = replace_phrases(paragraph.text)
+        replaced_paragraph = replace_phrases(text)
 
         # Break down the paragraph into sub-paragraphs if necessary
         sub_paragraphs = []
@@ -86,7 +90,7 @@ def output_translation(input_path, output_path, target_language='en'):
         # Add the original and translated sub-paragraphs to the output document
         for i in range(len(sub_paragraphs)):
             # Add the original sub-paragraph to the output document
-            output_doc.add_paragraph(sub_paragraphs[i])
+            # output_doc.add_paragraph(sub_paragraphs[i])
             output_doc.add_paragraph(sub_paragraphs[i])
 
             # Add the translated sub-paragraph to the output document
