@@ -46,7 +46,8 @@ env_vars = dotenv_values('.env')
 openai.api_key = env_vars.get('OPENAI_API_KEY')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env_vars.get('GOOGLE_APPLICATION_CREDENTIALS')
 
-replacements_file = 'pre-phrases.csv'
+pre_replacements_file = 'pre-phrases.csv'
+post_replacements_file = 'post-phrases.csv'
 
 def read_secret_key():
     # Load the environment variables from the .env file
@@ -57,12 +58,22 @@ def read_secret_key():
 
     return secret_key
 
-with open(replacements_file, 'r', encoding='utf-8') as csvfile:
+with open(pre_replacements_file, 'r', encoding='utf-8') as csvfile:
     reader = csv.reader(csvfile)
-    replacements = {row[0]: row[1] for row in reader}
+    pre_replacements = {row[0]: row[1] for row in reader}
 
-def replace_phrases(text):
-    for phrase, replacement in replacements.items():
+with open(post_replacements_file, 'r', encoding='utf-8') as csvfile:
+    reader = csv.reader(csvfile)
+    post_replacements = {row[0]: row[1] for row in reader}
+
+def pre_replace_phrases(text):
+    for phrase, replacement in pre_replacements.items():
+        text = text.replace(phrase, replacement)
+
+    return text
+
+def post_replace_phrases(text):
+    for phrase, replacement in post_replacements.items():
         text = text.replace(phrase, replacement)
 
     return text
@@ -118,11 +129,12 @@ def output_translation(input_path, output_path, target_language='en'):
             continue
 
         # Replace phrases in the paragraph before translation
-        replaced_paragraph = replace_phrases(text)
+        replaced_paragraph = pre_replace_phrases(text)
 
         # Break down the paragraph into sub-paragraphs if necessary
         sub_paragraphs = []
         if len(replaced_paragraph) > 2000:
+            # TODO: change this paragraph to only break at periods
             sub_paragraphs = [replaced_paragraph[i:i+2000] for i in range(0, len(replaced_paragraph), 2000)]
         else:
             sub_paragraphs.append(replaced_paragraph)
@@ -132,20 +144,22 @@ def output_translation(input_path, output_path, target_language='en'):
             # Add the original sub-paragraph to the output document
             output_doc.add_paragraph(sub_paragraph)
 
+            translated_sub_paragraph = translate_paragraph_google(sub_paragraph, target_language)
+            translated_sub_paragraph = pre_replace_phrases(translated_sub_paragraph)
+            p = output_doc.add_paragraph()
+            run = p.add_run()
+            run.text = translated_sub_paragraph
+            font = run.font
+            font.color.rgb = RGBColor(0, 128, 0)
+
             translated_sub_paragraph = translate_paragraph_gpt(sub_paragraph, target_language).replace('\n', '')
+            translated_sub_paragraph = pre_replace_phrases(translated_sub_paragraph)
             # Add the translated sub-paragraph to the output document
             p = output_doc.add_paragraph()
             run = p.add_run()
             run.text = translated_sub_paragraph
             font = run.font
             font.color.rgb = RGBColor(25, 25, 112)
-
-            translated_sub_paragraph = translate_paragraph_google(sub_paragraph, target_language)
-            p = output_doc.add_paragraph()
-            run = p.add_run()
-            run.text = translated_sub_paragraph
-            font = run.font
-            font.color.rgb = RGBColor(0, 128, 0)
 
     # Save the output document
     output_doc.save(output_path)
