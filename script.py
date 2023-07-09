@@ -3,10 +3,49 @@ import openai
 from docx import Document
 from dotenv import dotenv_values
 import csv
+import os
+import time
+import random
+from docx.shared import RGBColor
+
+# Imports the Google Cloud Translation library
+from google.cloud import translate
+
+# Initialize Translation client
+def translate_paragraph_google(paragraph, target_language='hindi') -> translate.TranslationServiceClient:
+    """Translating Text."""
+
+    project_id = "chanakya-259818"
+
+    if target_language == 'hindi':
+        target_language = 'hi'
+
+    client = translate.TranslationServiceClient()
+
+    location = "global"
+
+    parent = f"projects/{project_id}/locations/{location}"
+
+    # Translate text from English to French
+    # Detail on supported types can be found here:
+    # https://cloud.google.com/translate/docs/supported-formats
+    response = client.translate_text(
+        request={
+            "parent": parent,
+            "contents": [paragraph],
+            "mime_type": "text/plain",  # mime types: text/plain, text/html
+            "source_language_code": "en-US",
+            "target_language_code": target_language,
+        }
+    )
+
+    return response.translations[0].translated_text
 
 # Load the environment variables from the .env file
 env_vars = dotenv_values('.env')
 openai.api_key = env_vars.get('OPENAI_API_KEY')
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env_vars.get('GOOGLE_APPLICATION_CREDENTIALS')
+
 replacements_file = 'pre-phrases.csv'
 
 def read_secret_key():
@@ -28,12 +67,15 @@ def replace_phrases(text):
 
     return text
 
-def translate_paragraph(paragraph, target_language='hindi'):
+def translate_paragraph_gpt(paragraph, target_language='hindi'):
     # Prepare the system message
     # system_message = {
     #     "role": "system",
     #     "content": "
     # }
+
+    if paragraph.strip() == '':
+        return ''
 
     # Prepare the user message with the paragraph to translate
     user_message = {
@@ -42,20 +84,24 @@ def translate_paragraph(paragraph, target_language='hindi'):
     }
 
     # Generate translation using ChatGPT
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[user_message],
-        max_tokens=3900,
-        temperature=0.7,
-        n=1,
-        stop=None,
-    )
-
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[user_message],
+            max_tokens=3900,
+            temperature=0.7,
+            n=1,
+            stop=None,
+        )
+    except Ellipsis as e:
+        print("An error occured: ", str(e))
+        sleep_duration = random.randint(5, 10)
+        time.sleep(sleep_duration)
+        return translate_paragraph_gpt(paragraph, target_language='hindi')
     # Retrieve the translated text from the API response
+
     translated_text = response.choices[0].text.strip()
-
     print(translated_text)
-
     return translated_text
 
 def output_translation(input_path, output_path, target_language='en'):
@@ -82,19 +128,24 @@ def output_translation(input_path, output_path, target_language='en'):
             sub_paragraphs.append(replaced_paragraph)
 
         # Translate each sub-paragraph
-        translated_sub_paragraphs = []
         for sub_paragraph in sub_paragraphs:
-            translated_sub_paragraph = translate_paragraph(sub_paragraph, target_language)
-            translated_sub_paragraphs.append(translated_sub_paragraph)
-
-        # Add the original and translated sub-paragraphs to the output document
-        for i in range(len(sub_paragraphs)):
             # Add the original sub-paragraph to the output document
-            # output_doc.add_paragraph(sub_paragraphs[i])
-            output_doc.add_paragraph(sub_paragraphs[i])
+            output_doc.add_paragraph(sub_paragraph)
 
+            translated_sub_paragraph = translate_paragraph_gpt(sub_paragraph, target_language).replace('\n', '')
             # Add the translated sub-paragraph to the output document
-            output_doc.add_paragraph(translated_sub_paragraphs[i])
+            p = output_doc.add_paragraph()
+            run = p.add_run()
+            run.text = translated_sub_paragraph
+            font = run.font
+            font.color.rgb = RGBColor(25, 25, 112)
+
+            translated_sub_paragraph = translate_paragraph_google(sub_paragraph, target_language)
+            p = output_doc.add_paragraph()
+            run = p.add_run()
+            run.text = translated_sub_paragraph
+            font = run.font
+            font.color.rgb = RGBColor(0, 128, 0)
 
     # Save the output document
     output_doc.save(output_path)
