@@ -87,11 +87,13 @@ def translate_paragraph_gpt(paragraph, target_language='hindi'):
 
     if paragraph.strip() == '':
         return ''
+    
+    PROMPT = env_vars.get('GPT_PROMPT').replace('TARGET_LANGUAGE', target_language)
 
     # Prepare the user message with the paragraph to translate
     user_message = {
         "role": "user",
-        "content": "Provide an easy to read translation in  " + target_language + ". Break longer sentences into shorter ones if needed to make it more readable but keep the meaning and key words intact.\n\n" + paragraph
+        "content": PROMPT + paragraph
     }
 
     # Generate translation using ChatGPT
@@ -146,8 +148,7 @@ def output_translation(input_path, output_path, target_language='en'):
 
             translated_sub_paragraph = translate_paragraph_google(sub_paragraph, target_language)
             translated_sub_paragraph = pre_replace_phrases(translated_sub_paragraph)
-            p = output_doc.add_paragraph()
-            run = p.add_run()
+            run = output_doc.add_paragraph().add_run()
             run.text = translated_sub_paragraph
             font = run.font
             font.color.rgb = RGBColor(0, 128, 0)
@@ -155,8 +156,7 @@ def output_translation(input_path, output_path, target_language='en'):
             translated_sub_paragraph = translate_paragraph_gpt(sub_paragraph, target_language).replace('\n', '')
             translated_sub_paragraph = pre_replace_phrases(translated_sub_paragraph)
             # Add the translated sub-paragraph to the output document
-            p = output_doc.add_paragraph()
-            run = p.add_run()
+            run = output_doc.add_paragraph().add_run()
             run.text = translated_sub_paragraph
             font = run.font
             font.color.rgb = RGBColor(25, 25, 112)
