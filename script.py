@@ -11,6 +11,45 @@ from docx.shared import RGBColor
 # Imports the Google Cloud Translation library
 from google.cloud import translate
 
+# Load the environment variables from the .env file
+env_vars = dotenv_values('.env')
+openai.api_key = env_vars.get('OPENAI_API_KEY')
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env_vars.get('GOOGLE_APPLICATION_CREDENTIALS')
+
+pre_replacements_file = 'pre-phrases.csv'
+post_replacements_file = 'post-phrases.csv'
+
+# Read the pre and post replacements from the csv files
+with open(pre_replacements_file, 'r', encoding='utf-8') as csvfile:
+    reader = csv.reader(csvfile)
+    pre_replacements = {row[0]: row[1] for row in reader}
+
+with open(post_replacements_file, 'r', encoding='utf-8') as csvfile:
+    reader = csv.reader(csvfile)
+    post_replacements = {row[0]: row[1] for row in reader}
+
+# Read the secret key from the .env file
+def read_secret_key():
+    # Load the environment variables from the .env file
+    env_vars = dotenv_values('.env')
+    # Access the SECRET_KEY variable
+    secret_key = env_vars.get('SECRET_KEY')
+    return secret_key
+
+# Replace the phrases in the text with the pre-defined replacements before translation
+def pre_replace_phrases(text):
+    for phrase, replacement in pre_replacements.items():
+        text = text.replace(phrase, replacement)
+
+    return text
+
+# Replace the phrases in the text with the replacements post automatic translation
+def post_replace_phrases(text):
+    for phrase, replacement in post_replacements.items():
+        text = text.replace(phrase, replacement)
+
+    return text
+
 # Initialize Translation client
 def translate_paragraph_google(paragraph, target_language='hindi') -> translate.TranslationServiceClient:
     """Translating Text."""
@@ -21,12 +60,10 @@ def translate_paragraph_google(paragraph, target_language='hindi') -> translate.
         target_language = 'hi'
 
     client = translate.TranslationServiceClient()
-
     location = "global"
-
     parent = f"projects/{project_id}/locations/{location}"
 
-    # Translate text from English to French
+    # Translate text from source_language to target_language
     # Detail on supported types can be found here:
     # https://cloud.google.com/translate/docs/supported-formats
     response = client.translate_text(
@@ -40,43 +77,6 @@ def translate_paragraph_google(paragraph, target_language='hindi') -> translate.
     )
 
     return response.translations[0].translated_text
-
-# Load the environment variables from the .env file
-env_vars = dotenv_values('.env')
-openai.api_key = env_vars.get('OPENAI_API_KEY')
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env_vars.get('GOOGLE_APPLICATION_CREDENTIALS')
-
-pre_replacements_file = 'pre-phrases.csv'
-post_replacements_file = 'post-phrases.csv'
-
-def read_secret_key():
-    # Load the environment variables from the .env file
-    env_vars = dotenv_values('.env')
-
-    # Access the SECRET_KEY variable
-    secret_key = env_vars.get('SECRET_KEY')
-
-    return secret_key
-
-with open(pre_replacements_file, 'r', encoding='utf-8') as csvfile:
-    reader = csv.reader(csvfile)
-    pre_replacements = {row[0]: row[1] for row in reader}
-
-with open(post_replacements_file, 'r', encoding='utf-8') as csvfile:
-    reader = csv.reader(csvfile)
-    post_replacements = {row[0]: row[1] for row in reader}
-
-def pre_replace_phrases(text):
-    for phrase, replacement in pre_replacements.items():
-        text = text.replace(phrase, replacement)
-
-    return text
-
-def post_replace_phrases(text):
-    for phrase, replacement in post_replacements.items():
-        text = text.replace(phrase, replacement)
-
-    return text
 
 def translate_paragraph_gpt(paragraph, target_language='hindi'):
     # Prepare the system message
@@ -114,8 +114,43 @@ def translate_paragraph_gpt(paragraph, target_language='hindi'):
     # Retrieve the translated text from the API response
 
     translated_text = response.choices[0].text.strip()
-    print(translated_text)
     return translated_text
+
+def break_paragraph_into_subparagraphs(paragraph, max_length=2000):
+    # Break the paragraph into sub-paragraphs of maximum length
+    sub_paragraphs = []
+    while len(paragraph) > max_length:
+        # Find the last period within the maximum length
+        last_period_index = paragraph.rfind(".", 0, max_length)
+        if last_period_index == -1:
+            # If no period is found within the maximum length, just split at the max length
+            sub_paragraph = paragraph[:max_length]
+            paragraph = paragraph[max_length:]
+        else:
+            # Split at the last period found
+            sub_paragraph = paragraph[:last_period_index + 1]
+            paragraph = paragraph[last_period_index + 1:]
+        sub_paragraphs.append(sub_paragraph)
+
+    # Append the remaining part of the paragraph, which is now less than the max_length
+    if paragraph:
+        sub_paragraphs.append(paragraph)
+
+    return sub_paragraphs
+
+def translate_paragraph(model,sub_paragraph, target_language):
+    # Translate the sub-paragraph based on the model
+    if model=='gpt':
+        return translate_paragraph_gpt(sub_paragraph, target_language)
+    elif model=='google':
+        return translate_paragraph_google(sub_paragraph, target_language)
+    else:
+        raise Exception('Invalid model')
+
+model_colors = {
+    'gpt': RGBColor(25, 25, 112),
+    'google': RGBColor(0, 128, 0)
+}
 
 def output_translation(input_path, output_path, target_language='en'):
     # Load the input document
@@ -132,34 +167,22 @@ def output_translation(input_path, output_path, target_language='en'):
 
         # Replace phrases in the paragraph before translation
         replaced_paragraph = pre_replace_phrases(text)
-
-        # Break down the paragraph into sub-paragraphs if necessary
-        sub_paragraphs = []
-        if len(replaced_paragraph) > 2000:
-            # TODO: change this paragraph to only break at periods
-            sub_paragraphs = [replaced_paragraph[i:i+2000] for i in range(0, len(replaced_paragraph), 2000)]
-        else:
-            sub_paragraphs.append(replaced_paragraph)
+        sub_paragraphs = break_paragraph_into_subparagraphs(replaced_paragraph, max_length=2000)
 
         # Translate each sub-paragraph
         for sub_paragraph in sub_paragraphs:
             # Add the original sub-paragraph to the output document
             output_doc.add_paragraph(sub_paragraph)
 
-            translated_sub_paragraph = translate_paragraph_google(sub_paragraph, target_language)
-            translated_sub_paragraph = pre_replace_phrases(translated_sub_paragraph)
-            run = output_doc.add_paragraph().add_run()
-            run.text = translated_sub_paragraph
-            font = run.font
-            font.color.rgb = RGBColor(0, 128, 0)
-
-            translated_sub_paragraph = translate_paragraph_gpt(sub_paragraph, target_language).replace('\n', '')
-            translated_sub_paragraph = pre_replace_phrases(translated_sub_paragraph)
-            # Add the translated sub-paragraph to the output document
-            run = output_doc.add_paragraph().add_run()
-            run.text = translated_sub_paragraph
-            font = run.font
-            font.color.rgb = RGBColor(25, 25, 112)
+            # Translate the sub-paragraph using each model
+            for model in model_colors.keys():
+                # Add the translated sub-paragraph to the output document
+                translated_sub_paragraph = translate_paragraph(model,sub_paragraph, target_language)
+                translated_sub_paragraph = post_replace_phrases(translated_sub_paragraph).replace('\n', '')
+                run = output_doc.add_paragraph().add_run()
+                run.text = translated_sub_paragraph
+                font = run.font
+                font.color.rgb = model_colors[model]
 
     # Save the output document
     output_doc.save(output_path)
