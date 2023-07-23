@@ -49,4 +49,5 @@ def main():
             i += 2
 
 if __name__ == '__main__': 
-    main()
+    # main()
+    print(langid.classify("taṃ dvedhāpathaṃ ñatvā, bhavāya vibhavāya ca"))
