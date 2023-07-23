@@ -1,2 +1,3 @@
 python-docx==0.8.11
 openai==0.27.0
+langid==1.1.6
