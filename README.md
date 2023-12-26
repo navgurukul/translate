@@ -1,5 +1,3 @@
-Certainly! Here's a template for the README file in Markdown format:
-
 ```markdown
 # Project Name
 
