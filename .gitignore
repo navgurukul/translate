@@ -4,3 +4,8 @@ chanakya-259818-3d5b594acdad.json
 *pdf
 *txt
 *tsv
+*csv
+translated-books/*
+__pycache__/*
+to-be-translated-books/*
+generated-pairs/*

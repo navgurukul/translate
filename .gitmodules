@@ -1,0 +1,3 @@
+[submodule "tipitaka-xml"]
+	path = tipitaka-xml
+	url = git@github.com:VipassanaTech/tipitaka-xml.git

@@ -1,12 +1,69 @@
-Original Phrase,Replacement Phrase
+﻿Original Phrase,Replacement Phrase
 S.N.,Satya Narayan
-courses,camps
+course,camp
+Course,Camp
 vipassana meditation,vipassana
 Vipassana meditation,vipassana
 Vipassana Meditation,Vipassana
-courses in Vipassana, courses of Vipassana
-courses in Vipassana meditation, courses of Vipassana
-students, साधको 
-meditators, साधको
-meditator, साधक
-student, साधक
+courses in Vipassana,courses of Vipassana
+courses in Vipassana meditation,courses of Vipassana
+students,साधको
+meditators,साधको
+meditator,साधक
+student,साधक
+"CATs/","समन्यवक क्षेत्र आचार्यों/"
+"SATs/","वरिष्ठ सहायक आचार्यों/"
+"CTs/","केंद्र आचार्यों/"
+"ATs/","सहायक आचार्यों/"
+"CAT/","समन्यवक क्षेत्र आचार्य/"
+"SAT/","वरिष्ठ सहायक आचार्य/"
+"CT/","केंद्र आचार्य/"
+"AT/","सहायक आचार्य/"
+"/CATs,","/समन्यवक क्षेत्र आचार्यों,"
+"/SATs,","/वरिष्ठ सहायक आचार्यों,"
+"/CTs,","/केंद्र आचार्यों,"
+"/ATs,","/सहायक आचार्यों,"
+"/CAT,","/समन्यवक क्षेत्र आचार्य,"
+"/SAT,","/वरिष्ठ सहायक आचार्य,"
+"/CT,","/केंद्र आचार्य,"
+"/AT,","/सहायक आचार्य,"
+"/CATs ","/समन्यवक क्षेत्र आचार्यों "
+"/SATs ","/वरिष्ठ सहायक आचार्यों "
+"/CTs ","/केंद्र आचार्यों "
+"/ATs ","/सहायक आचार्यों "
+"/CAT ","/समन्यवक क्षेत्र आचार्य "
+"/SAT ","/वरिष्ठ सहायक आचार्य "
+"/CT ","/केंद्र आचार्य "
+"/AT ","/सहायक आचार्य "
+"CATs,","समन्यवक क्षेत्र आचार्यों,"
+"SATs,","वरिष्ठ सहायक आचार्यों,"
+"CTs,","केंद्र आचार्यों,"
+"ATs,","सहायक आचार्यों,"
+"CAT,","समन्यवक क्षेत्र आचार्य,"
+"SAT,","वरिष्ठ सहायक आचार्य,"
+"CT,","केंद्र आचार्य,"
+"AT,","सहायक आचार्य,"
+"CATs.","समन्यवक क्षेत्र आचार्यों"
+"SATs.","वरिष्ठ सहायक आचार्यों"
+"CTs.","केंद्र आचार्यों"
+"ATs.","सहायक आचार्यों"
+"CAT.","समन्यवक क्षेत्र आचार्य"
+"SAT.","वरिष्ठ सहायक आचार्य"
+"CT.","केंद्र आचार्य"
+"AT.","सहायक आचार्य"
+ CATs , समन्यवक क्षेत्र आचार्यों 
+ SATs , वरिष्ठ सहायक आचार्यों 
+ CTs , केंद्र आचार्यों 
+ ATs , सहायक आचार्यों 
+ CAT , समन्यवक क्षेत्र आचार्य 
+ SAT, वरिष्ठ सहायक आचार्य 
+ CT , केंद्र आचार्य 
+ AT , सहायक आचार्य  
+VRI,वीआरआई
+SVCT,एसवीसीटी
+GVF,जीवीएफ
+Dhamma Servers,धम्म सेवको
+Dhamma Server,धम्म सेवक
+अध्यापक,आचार्य
+discourses,प्रवचन
+discourse,प्रवचन
