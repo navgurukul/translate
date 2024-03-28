@@ -1,4 +1,21 @@
-# Create a script in python to read a docx file with one paragraph after other. paragraphs are alternatively in hindi and english. create a tsv file from this, where the english paragraph is in the first column, and the second column is hindi paragraph. use a simple language detection tool which can be based on the characters used in the text to identify which is hindi and which is english.
+'''
+Docstring for Python Script to Process Bilingual Docx File
+
+This Python script processes a docx file containing alternating paragraphs of English and Hindi text. It creates a tab-separated values (TSV) file for further analysis.
+
+Functionality:
+
+Reads the paragraphs from the docx file.
+Identifies the language of each paragraph using a character-based detection method.
+Creates a TSV file with two columns:
+Column 1: English Paragraph (empty if the paragraph is Hindi)
+Column 2: Hindi Paragraph (empty if the paragraph is English)
+Language Detection:
+
+The script employs a basic language detection technique that relies on character sets. It assumes that paragraphs containing mostly characters from the Devanagari script (used for Hindi) are Hindi, and paragraphs with characters primarily from the Latin alphabet are English. This is a simplified approach and may not be accurate for code-mixed text or paragraphs with special characters.
+
+Note: This method is not foolproof and may require further refinement for handling complex scenarios.
+'''
 
 import docx
 import os
@@ -6,22 +23,7 @@ import sys
 import re
 import langid
 import argparse
-import nltk.data
-
-tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-
-# A function that inputs a paragraph and returns an array of the sentences in the paragraph
-def get_sentences_en(paragraph):
-    # Split the paragraph into sentences
-    sentences = tokenizer.tokenize(paragraph)
-    # re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', paragraph)
-    return sentences
-
-# A function that inputs a paragraph in Hindi and returns an array of the sentences in the paragraph
-def get_sentences_hi(paragraph):
-    # Split the paragraph into sentences
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=।|\?)\s', paragraph)
-    return sentences
+from tokenizer import get_sentences_en, get_sentences_hi
 
 def clean_paragraphs(paragraphs):
     # map the above paragraphs text to a new variable paragraphs_text
