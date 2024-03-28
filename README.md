@@ -1,13 +1,10 @@
-Certainly! Here's a template for the README file in Markdown format:
-
-```markdown
 # Project Name
 
 Using AI to Universalize Buddha's Teachings
 
 ## Description
 
-This project aims to leverage artificial intelligence (AI) to universalize the teachings of Buddha beyond language barriers. By applying AI-based translation techniques to spiritual texts, the project seeks to make the wisdom and teachings accessible to a broader audience worldwide.
+This project aims to leverage artificial intelligence (AI) to universalize the teachings of Buddha beyond language barriers. By applying AI-based translation and transcription techniques to spiritual texts, the project seeks to make the wisdom and teachings accessible to a broader audience worldwide.
 
 For a detailed project description, please refer to the [project description document](https://navgurukul.notion.site/Using-AI-to-universalize-Buddha-s-teachings-beyond-bf09169955e94213b06809c11848952e?pvs=4).
 
@@ -16,7 +13,7 @@ For a detailed project description, please refer to the [project description doc
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/your-repository.git
+   git clone https://github.com/navgurukul/translate.git
    ```
 
 2. Install the required dependencies:
