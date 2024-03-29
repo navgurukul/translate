@@ -22,19 +22,19 @@ to identify the closest Hindi sentence to the translated version of each English
    * Read the content of `hi_file` and store each line (sentence) in a list called `hi_sentences`.
 
 2. **Translate English Sentences:**
-   * Create a new list called `translated_en_sentences`.
+   * Create a new list called `target_en_sentences`.
    * For each sentence `en_sentence` in `en_sentences`:
        * Use `translate_fn` to translate `en_sentence` to Hindi.
-       * Add the translated sentence to `translated_en_sentences`.
+       * Add the translated sentence to `target_en_sentences`.
 
 3. **Iterate through English Sentences:**
-   * For each sentence `en_sentence` (and its corresponding translation `translated_en_sentence`) in `en_sentences` and `translated_en_sentences`:
+   * For each sentence `en_sentence` (and its corresponding translation `target_en_sentence`) in `en_sentences` and `target_en_sentences`:
 
        **Find Closest Hindi Match:**
            * Initialize `closest_hi_score` to negative infinity (very low score).
            * Initialize `closest_hi_sentence` to `None`.
            * For each sentence `hi_sentence` in `hi_sentences`:
-               * Calculate the similarity score between `translated_en_sentence` and `hi_sentence` using the chosen similarity function (explained later). Let's call this score `score`.
+               * Calculate the similarity score between `target_en_sentence` and `hi_sentence` using the chosen similarity function (explained later). Let's call this score `score`.
                * If `score` is greater than `closest_hi_score`:
                    * Update `closest_hi_score` with `score`.
                    * Update `closest_hi_sentence` with `hi_sentence`.
@@ -44,7 +44,7 @@ to identify the closest Hindi sentence to the translated version of each English
 
 **Similarity Function:**
 
-This algorithm relies on a similarity function to compare translated English sentences (`translated_en_sentences`) and Hindi sentences (`hi_sentences`). Here are two options:
+This algorithm relies on a similarity function to compare translated English sentences (`target_en_sentences`) and Hindi sentences (`hi_sentences`). Here are two options:
 
 * **Simple Word Overlap:** Calculate the number of words that appear in both sentences.
 * **More Advanced Techniques:** Use libraries or tools that provide semantic similarity scores between sentences, considering word meaning and context.
@@ -68,7 +68,8 @@ from docx.oxml.table import CT_Tbl
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 import sys
-from tokenizer import get_sentences_en, get_sentences_hi
+from tokenizer import get_sentences
+import json
 
 def iter_block_items(parent):
     """
@@ -93,52 +94,85 @@ def iter_block_items(parent):
             yield Table(child, parent)
 
 
-def process_doc(source_filename, translated_filename, output_filename, source_language, translated_language):
+def get_sentences_from_docx(filename, language) -> list:
     """
-    Reads a docx file in order, replacing characters with spaces randomly,
-    and creates a new doc with the updated content.
+    Extracts sentences from a docx file and returns a list of sentences.
     """
-
-    document = docx.Document(source_filename)
-    source_strings = []
+    document = docx.Document(filename)
+    source_paras = []
+    source_sentences = []
 
     for block in iter_block_items(document):
         if isinstance(block, Paragraph):
-            source_strings.append(block.text)
+            source_paras.append(block.text)
 
         elif isinstance(block, Table):
             for i,row in enumerate(block.rows):
                 for j,cell in enumerate(row.cells):
                     for paragraph in cell.paragraphs:
-                        # source_strings.append(cell.paragraphs[0])
+                        # source_paras.append(cell.paragraphs[0])
                         for run in paragraph.runs:
-                            source_strings.append(run.text)
-
+                            source_paras.append(run.text)
 
     # source_strings for each source_string use get_sentences_en and append that to the array
-    for source_string in source_strings:
-        sentences = get_sentences_en(source_string)
-        source_strings.extend(sentences)
-        print(sentences)
-    source_strings = list(filter(lambda x: x != '', source_strings))
-    source_strings = list(map(lambda x: x.strip().replace("\xa0",""), source_strings))
-    print(source_strings.__len__())
-    print(source_strings[:50])
+    for i,source_string in enumerate(source_paras):
+        sentences = get_sentences(source_string, language)
+        source_sentences.extend(sentences)
+    source_sentences = list(set(list(map(lambda x: x.strip().replace("\xa0","").replace("\t", "  "), source_sentences))))
+    source_sentences = list(filter(lambda x: len(x)>15, source_sentences))
+    return source_sentences
+
+def process_doc(source_filename, target_filename, output_filename, source_language, target_language):
+    source_sentences=get_sentences_from_docx(source_filename, source_language)
+    translated_sentences = []
+    target_sentences=get_sentences_from_docx(target_filename, target_language)
+
+    # dump source_sentences, translated_sentences, target_sentences in a json file
+    data = {
+        "source_sentences": source_sentences,
+        "translated_sentences": translated_sentences,
+        "target_sentences": target_sentences
+    }
+
+    with open('sentences.json', 'w') as f:
+        json.dump(data, f)
+
+    # read the json file and print source_sentences, translated_sentences, target_sentences
+    with open('sentences.json', 'r') as f:
+        data = json.load(f)
+        source_sentences = data["source_sentences"]
+        translated_sentences = data["translated_sentences"]
+        target_sentences = data["target_sentences"]
+        
+    # with open(output_filename, 'w', encoding='utf-8') as f:
+    #     for source_sentence in source_sentences:
+    #         translated_sentences.append(translate_paragraph("google", source_sentence, target_language))
+    #     for source_sentence in source_sentences:
+    #         closest_hi_score = -1
+    #         closest_hi_sentence = None
+    #         for target_sentence in translated_sentences:
+    #             for hi_sentence in target_sentences:
+    #                 score = similarity(target_sentence, hi_sentence)
+    #                 if score > closest_hi_score:
+    #                     closest_hi_score = score
+    #                     closest_hi_sentence = hi_sentence
+    #         f.write(source_sentence + "\t" + closest_hi_sentence + "\n")
+    # print(len(source_sentences), len(target_sentences))
 
 if __name__ == '__main__':
     # Check if the correct number of command line arguments is provided
     if len(sys.argv) < 3:
-        print("Usage: python script.py source_file translated_file [output_file] [source_language] [translated_language]")
+        print("Usage: python script.py source_file target_file [output_file] [source_language] [target_language]")
         sys.exit(1)
 
     # Extract the input and output file names from command line arguments
     source_file = sys.argv[1]
-    translated_file = sys.argv[2]
+    target_file = sys.argv[2]
 
     # Extract the target language if provided,default to 'en' if not specified
     output_file = sys.argv[3] if len(sys.argv) > 3 else 'translation_pairs.tsv'
     source_language = sys.argv[4] if len(sys.argv) > 4 else 'en'
-    translated_language = sys.argv[5] if len(sys.argv) > 3 else 'hi'
+    target_language = sys.argv[5] if len(sys.argv) > 3 else 'hi'
 
     # Call the function to output the translation
-    process_doc(source_file, translated_file, output_file, source_language, translated_language)
+    process_doc(source_file, target_file, output_file, source_language, target_language)

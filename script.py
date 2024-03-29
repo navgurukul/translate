@@ -195,51 +195,10 @@ def translate_paragraph_google(paragraph,target_language='hindi') -> translate.T
 
     return '\n'+translated_text
 
-def translate_paragraph_gpt(paragraph,target_language='hindi'):
-    if paragraph.strip() == '':
-        return ''
-    
-    PROMPT = env_vars.get('GPT_PROMPT').replace('TARGET_LANGUAGE',target_language)
-
-    # Prepare the user message with the paragraph to translate
-    user_message = {
-        "role": "user",
-        "content": PROMPT + paragraph
-    }
-
-    # Generate translation using ChatGPT
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-4",
-            # model="gpt-3.5-turbo-16k",
-            messages=[user_message],
-            max_tokens=3900,
-            temperature=0.7,
-            n=1,
-            stop=None,
-        )
-    except Exception as e:
-        print("An error occured: ",str(e))
-        sleep_duration = random.randint(5,15)
-        time.sleep(sleep_duration)
-        return translate_paragraph_gpt(paragraph,target_language='hindi')
-    # Retrieve the translated text from the API response
-
-    print(response.choices[0].message.content)
-
-    translated_text = response.choices[0].message.content.strip()
-    return translated_text
-
 def translate_paragraph(model,text,target_language):
     if text.strip() == '':
         return ''
-    # Translate the sub-paragraph based on the model
-    if model=='gpt':
-        return translate_paragraph_gpt(text,target_language)
-    elif model=='google':
-        return translate_paragraph_google(text,target_language)
-    else:
-        raise Exception('Invalid model')
+    return translate_paragraph_google(text,target_language)
 
 if __name__ == '__main__':
     # Check if the correct number of command line arguments is provided
