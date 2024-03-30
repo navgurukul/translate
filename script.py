@@ -9,45 +9,18 @@ import docx
 import random
 
 from docx import Document
-from docx.document import Document as _Document
 from docx.oxml.text.paragraph import CT_P
 from docx.oxml.table import CT_Tbl
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 
-import html
+from translation import translate_text
+
 import sys
-import openai
 from docx import Document
-from dotenv import dotenv_values
-import csv
-import os
-import time
 import random
 from docx.shared import RGBColor
 from tqdm import tqdm
-
-from get_lang import detect_language_and_pali
-
-# Imports the Google Cloud Translation library
-from google.cloud import translate
-
-# Load the environment variables from the .env file
-env_vars = dotenv_values('.env')
-openai.api_key = env_vars.get('OPENAI_API_KEY')
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env_vars.get('GOOGLE_APPLICATION_CREDENTIALS')
-
-pre_replacements_file = 'pre-phrases.csv'
-post_replacements_file = 'post-phrases.csv'
-
-# Read the pre and post replacements from the csv files
-with open(pre_replacements_file,'r',encoding='utf-8') as csvfile:
-    reader = csv.reader(csvfile)
-    pre_replacements = {row[0]: row[1] for row in reader}
-
-with open(post_replacements_file,'r',encoding='utf-8') as csvfile:
-    reader = csv.reader(csvfile)
-    post_replacements = {row[0]: row[1] for row in reader}
 
 def iter_block_items(parent):
     """
@@ -57,7 +30,7 @@ def iter_block_items(parent):
     Document object, but also works for a _Cell object, which itself can
     contain paragraphs and tables.
     """
-    if isinstance(parent, _Document):
+    if isinstance(parent, Document):
         parent_elm = parent.element.body
         # print(parent_elm.xml)
     elif isinstance(parent, _Cell):
@@ -78,8 +51,8 @@ def process_doc(input_filename, output_filename, target_language):
     and creates a new doc with the updated content.
     """
 
-    document = docx.Document(input_filename)
-    new_document = docx.Document()
+    document = Document(input_filename)
+    new_document = Document()
     pbar = tqdm(total=len(document.paragraphs))
 
     for block in iter_block_items(document):
@@ -93,7 +66,7 @@ def process_doc(input_filename, output_filename, target_language):
                 new_run.bold = run.bold  # Preserve bold formatting
                 new_run.italic = run.italic  # Preserve italic formatting
 
-            new_run = new_paragraph.add_run(translate_paragraph("google", block.text, target_language))
+            new_run = new_paragraph.add_run('\n'+translate_text(block.text, target_language))
             new_run.font.name = run.font.name  # Preserve font
             new_run.font.color.rgb = RGBColor(0,128,0)
             new_run.font.size = run.font.size  # Preserve font size
@@ -127,7 +100,7 @@ def process_doc(input_filename, output_filename, target_language):
                     if i%2==0:
                         cell.text = table_values[new_i][j][0]
                     else:
-                        cell.text = translate_paragraph("google", table_values[new_i][j][0], target_language)
+                        cell.text = '\n'+translate_text(table_values[new_i][j][0], target_language)
 
         pbar.update(1)
         
@@ -142,63 +115,6 @@ def read_secret_key():
     # Access the SECRET_KEY variable
     secret_key = env_vars.get('SECRET_KEY')
     return secret_key
-
-# Replace the phrases in the text with the pre-defined replacements before translation
-def pre_replace_phrases(text):
-    for phrase,replacement in pre_replacements.items():
-        text = text.replace(phrase,replacement)
-
-    return text
-
-# Replace the phrases in the text with the replacements post automatic translation
-def post_replace_phrases(text):
-    for phrase,replacement in post_replacements.items():
-        text = text.replace(phrase,replacement)
-
-    return text
-
-# Initialize Translation client
-def translate_paragraph_google(paragraph,target_language='hindi') -> translate.TranslationServiceClient:
-    """Translating Text."""
-
-    project_id = "chanakya-259818"
-
-    paragraph, lang,is_pali,pali_percent = detect_language_and_pali(paragraph,0.01)
-
-    paragraph = pre_replace_phrases(paragraph)
-
-    if target_language == 'hindi':
-        target_language = 'hi'
-
-    client = translate.TranslationServiceClient()
-    location = "global"
-    parent = f"projects/{project_id}/locations/{location}"
-
-    print(paragraph)
-
-    # Translate text from source_language to target_language
-    response = client.translate_text(
-        request={
-            "parent": parent,
-            "contents": [paragraph],
-            "mime_type": "text/html", # mime types: text/plain,text/html
-            "source_language_code": "en-US",
-            "target_language_code": target_language,
-        }
-    )
-
-    translated_text = response.translations[0].translated_text
-    # translated_text = "Translated String: " + paragraph
-    translated_text = post_replace_phrases(translated_text).replace('\n','').replace('<span class="notranslate">','').replace('</span>','')
-    # replace all occurences of ascii characters like &#39 to the corresponding character
-    translated_text = html.unescape(translated_text).replace("ं","")
-
-    return '\n'+translated_text
-
-def translate_paragraph(model,text,target_language):
-    if text.strip() == '':
-        return ''
-    return translate_paragraph_google(text,target_language)
 
 if __name__ == '__main__':
     # Check if the correct number of command line arguments is provided

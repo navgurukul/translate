@@ -70,6 +70,7 @@ from docx.text.paragraph import Paragraph
 import sys
 from tokenizer import get_sentences
 import json
+from translation import translate_text
 
 def iter_block_items(parent):
     """
@@ -115,16 +116,17 @@ def get_sentences_from_docx(filename, language) -> list:
                             source_paras.append(run.text)
 
     # source_strings for each source_string use get_sentences_en and append that to the array
-    for i,source_string in enumerate(source_paras):
+    for source_string in source_paras:
         sentences = get_sentences(source_string, language)
         source_sentences.extend(sentences)
-    source_sentences = list(set(list(map(lambda x: x.strip().replace("\xa0","").replace("\t", "  "), source_sentences))))
+    source_sentences = list(map(lambda x: x.strip().replace("\xa0","").replace("\t", "  "), source_sentences))
     source_sentences = list(filter(lambda x: len(x)>15, source_sentences))
     return source_sentences
 
 def process_doc(source_filename, target_filename, output_filename, source_language, target_language):
     source_sentences=get_sentences_from_docx(source_filename, source_language)
-    translated_sentences = []
+    # translated_sentences = list of map of each value of source_sentences using translate_text function
+    translated_sentences = [translate_text(sentence) for sentence in source_sentences]
     target_sentences=get_sentences_from_docx(target_filename, target_language)
 
     # dump source_sentences, translated_sentences, target_sentences in a json file
@@ -134,11 +136,13 @@ def process_doc(source_filename, target_filename, output_filename, source_langua
         "target_sentences": target_sentences
     }
 
-    with open('sentences.json', 'w') as f:
-        json.dump(data, f)
+    # add encoding to open file syntax below
+
+    with open('sentences.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f,  ensure_ascii=False)
 
     # read the json file and print source_sentences, translated_sentences, target_sentences
-    with open('sentences.json', 'r') as f:
+    with open('sentences.json', 'r', encoding="utf-8") as f:
         data = json.load(f)
         source_sentences = data["source_sentences"]
         translated_sentences = data["translated_sentences"]
