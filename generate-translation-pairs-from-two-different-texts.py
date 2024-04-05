@@ -124,22 +124,29 @@ def get_sentences_from_docx(filename, language) -> list:
     return source_sentences
 
 def process_doc(source_filename, target_filename, output_filename, source_language, target_language):
-    source_sentences=get_sentences_from_docx(source_filename, source_language)
-    # translated_sentences = list of map of each value of source_sentences using translate_text function
-    translated_sentences = [translate_text(sentence) for sentence in source_sentences]
-    target_sentences=get_sentences_from_docx(target_filename, target_language)
+    source_sentences = get_sentences_from_docx(source_filename, source_language)
+    target_sentences = get_sentences_from_docx(target_filename, target_language)
 
-    # dump source_sentences, translated_sentences, target_sentences in a json file
-    data = {
-        "source_sentences": source_sentences,
-        "translated_sentences": translated_sentences,
-        "target_sentences": target_sentences
-    }
+    # Initialize an empty list to store translated sentences
+    translated_sentences = []
 
-    # add encoding to open file syntax below
+    # Iterate through each source sentence
+    for i, source_sentence in enumerate(source_sentences):
+        # Translate the current sentence
+        translated_sentence = translate_text(source_sentence)
 
-    with open('sentences.json', 'w', encoding='utf-8') as f:
-        json.dump(data, f,  ensure_ascii=False)
+        # Append the translated sentence to the list
+        translated_sentences.append(translated_sentence)
+
+        # Update the sentences.json file after each iteration
+        data = {
+            "source_sentences": source_sentences[:i+1],
+            "translated_sentences": translated_sentences,
+            "target_sentences": target_sentences[:i+1]
+        }
+
+        with open('sentences.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False)
 
     # read the json file and print source_sentences, translated_sentences, target_sentences
     with open('sentences.json', 'r', encoding="utf-8") as f:
@@ -148,21 +155,6 @@ def process_doc(source_filename, target_filename, output_filename, source_langua
         translated_sentences = data["translated_sentences"]
         target_sentences = data["target_sentences"]
         
-    # with open(output_filename, 'w', encoding='utf-8') as f:
-    #     for source_sentence in source_sentences:
-    #         translated_sentences.append(translate_paragraph("google", source_sentence, target_language))
-    #     for source_sentence in source_sentences:
-    #         closest_hi_score = -1
-    #         closest_hi_sentence = None
-    #         for target_sentence in translated_sentences:
-    #             for hi_sentence in target_sentences:
-    #                 score = similarity(target_sentence, hi_sentence)
-    #                 if score > closest_hi_score:
-    #                     closest_hi_score = score
-    #                     closest_hi_sentence = hi_sentence
-    #         f.write(source_sentence + "\t" + closest_hi_sentence + "\n")
-    # print(len(source_sentences), len(target_sentences))
-
 if __name__ == '__main__':
     # Check if the correct number of command line arguments is provided
     if len(sys.argv) < 3:

@@ -1,4 +1,6 @@
 from sentence_transformers import SentenceTransformer, util
+import string
+import math
 
 # Load the pre-trained HindSBERT model
 model_name = "l3cube-pune/hindi-bert-v2"
@@ -21,7 +23,7 @@ def hindi_sentence_similarity(sentence1, sentence2):
   # Calculate cosine similarity between the encoded vectors
   cosine_similarity = util.pytorch_cos_sim(sentence_embeddings[0], sentence_embeddings[1]).item()
 
-  return cosine_similarity
+  return (cosine_similarity-0.95)*20
 
 def length_penalty_score(sentence1, sentence2):
     length_ratio = abs(len(sentence1) - len(sentence2)) / max(len(sentence1), len(sentence2))
@@ -58,3 +60,19 @@ def char_ngram_similarity(sentence1, sentence2, n=4):
 
     # Jaccard similarity coefficient for n-gram overlap
     return float(intersection / union)
+
+def words_intersection(sentence1, sentence2):
+    words1 = sentence1.translate(str.maketrans("", "", string.punctuation)).lower().split(" ")
+    words2 = sentence2.translate(str.maketrans("", "", string.punctuation)).lower().split(" ")
+
+    prepositions = [
+    "के", "से", "का", "को", "में", "पर", "तक", "ही", "है",
+    "की", "का", "को", "तक", "तभी", "वही"]
+
+    words1 = [word for word in words1 if word not in prepositions]
+    words2 = [word for word in words2 if word not in prepositions]
+
+    words1 = [word for word in words1 if not word.isdigit()]
+    words2 = [word for word in words2 if not word.isdigit()]
+
+    return float(len(set(words1).intersection(set(words2)))/max(len(words1), len(words2)))*max(1, (1 + math.log(max(len(words1), len(words2)) / 3)) / 2)
