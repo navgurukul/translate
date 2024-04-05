@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+'''
+This Python script is designed to read a Microsoft Word document (.docx), translate its content to a specified language, and save the translated content into a new Word document. The script uses the python-docx library to interact with Word documents and the tqdm library to display a progress bar.
+
+The process_doc(input_filename, output_filename, target_language) function reads a Word document, translates its content, and writes the translated content to a new document. It first opens the input document and creates a new document. It then creates a progress bar with tqdm, setting the total to the number of paragraphs in the document.
+
+The function then iterates over each block (paragraph or table) in the document. If the block is a paragraph, it adds a new paragraph to the new document and copies the text and formatting from the original paragraph. It then adds a translated version of the paragraph text to the new paragraph, setting the font color to green.
+
+If the block is a table, it adds a new table to the new document with twice as many rows as the original table (to accommodate the translated text) and the same number of columns. It then creates a 2D list to store the text and formatting of each cell in the original table. It iterates over each cell in the original table, concatenating the text of all runs in the cell and storing the text and formatting in the 2D list. It then iterates over the cells in the new table, setting the text of each cell to the corresponding text in the 2D list (translated if the row is odd).
+
+Finally, the function updates the progress bar, closes it when done, and saves the new document.
+'''
+
 from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
