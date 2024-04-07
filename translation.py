@@ -1,7 +1,7 @@
 import html
 # Imports the Google Cloud Translation library
 from google.cloud import translate
-from get_lang import detect_language_and_pali
+from get_lang import pali_transform
 import os
 import csv
 from dotenv import dotenv_values
@@ -42,9 +42,9 @@ def translate_text(text,target_language='hindi') -> translate.TranslationService
     if text.strip() == '':
         return ''
 
-    project_id = "chanakya-259818"
+    project_id = "34917283366"
 
-    text, lang,is_pali,pali_percent = detect_language_and_pali(text,0.01)
+    text = pali_transform(text)
 
     text = pre_replace_phrases(text)
 
@@ -52,7 +52,8 @@ def translate_text(text,target_language='hindi') -> translate.TranslationService
         target_language = 'hi'
 
     client = translate.TranslationServiceClient()
-    location = "global"
+    location = "us-central1"
+    model = f"projects/{project_id}/locations/{location}/models/NM0ef5e2f059b5ad73"
     parent = f"projects/{project_id}/locations/{location}"
 
     print(text)
@@ -62,8 +63,9 @@ def translate_text(text,target_language='hindi') -> translate.TranslationService
         request={
             "parent": parent,
             "contents": [text],
+            "model": model,
             "mime_type": "text/html", # mime types: text/plain,text/html
-            "source_language_code": "en-US",
+            "source_language_code": "en",
             "target_language_code": target_language,
         }
     )
@@ -72,6 +74,9 @@ def translate_text(text,target_language='hindi') -> translate.TranslationService
     # translated_text = "Translated String: " + text
     translated_text = post_replace_phrases(translated_text).replace('\n','').replace('<span class="notranslate">','').replace('</span>','')
     # replace all occurences of ascii characters like &#39 to the corresponding character
-    translated_text = html.unescape(translated_text).replace("ं","")
+
+    translated_text = html.unescape(translated_text)
+
+    print('\n'+translated_text+'\n\n')
 
     return translated_text

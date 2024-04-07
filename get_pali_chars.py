@@ -18,8 +18,8 @@ def main():
         for row in reader:
             try:
                 hindi_word, english_word = row
-            except ValueError:
-                print(row)
+            except ValueError as e:
+                print(e, row)
             
             # update hi_chars with characters from hindi_word
             for char in hindi_word:

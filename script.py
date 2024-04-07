@@ -17,10 +17,8 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import docx
-import random
-
 from docx import Document
+from docx.document import Document as _Document
 from docx.oxml.text.paragraph import CT_P
 from docx.oxml.table import CT_Tbl
 from docx.table import _Cell, Table
@@ -42,7 +40,7 @@ def iter_block_items(parent):
     Document object, but also works for a _Cell object, which itself can
     contain paragraphs and tables.
     """
-    if isinstance(parent, Document):
+    if isinstance(parent, _Document):
         parent_elm = parent.element.body
         # print(parent_elm.xml)
     elif isinstance(parent, _Cell):
@@ -69,22 +67,23 @@ def process_doc(input_filename, output_filename, target_language):
 
     for block in iter_block_items(document):
         if isinstance(block, Paragraph):
-            new_paragraph = new_document.add_paragraph()
+            if len(block.runs) == 0:
+                continue
             
-            for run in block.runs:
-                new_run = new_paragraph.add_run(run.text)
-                new_run.font.name = run.font.name  # Preserve font
-                new_run.font.size = run.font.size  # Preserve font size
-                new_run.bold = run.bold  # Preserve bold formatting
-                new_run.italic = run.italic  # Preserve italic formatting
+            new_paragraph = new_document.add_paragraph()
+
+            new_run = new_paragraph.add_run(block.text)
+            new_run.font.name = block.runs[0].font.name  # Preserve font
+            new_run.font.size = block.runs[0].font.size  # Preserve font size
+            new_run.bold = block.runs[0].bold  # Preserve bold formatting
+            new_run.italic = block.runs[0].italic  # Preserve italic formatting
 
             new_run = new_paragraph.add_run('\n'+translate_text(block.text, target_language))
-            new_run.font.name = run.font.name  # Preserve font
+            new_run.font.name = block.runs[0].font.name  # Preserve font
             new_run.font.color.rgb = RGBColor(0,128,0)
-            new_run.font.size = run.font.size  # Preserve font size
-            new_run.bold = run.bold  # Preserve bold formatting
-            new_run.italic = run.italic  # Preserve italic formatting
-            font = run.font
+            new_run.font.size = block.runs[0].font.size  # Preserve font size
+            new_run.bold = block.runs[0].bold  # Preserve bold formatting
+            new_run.italic = block.runs[0].italic  # Preserve italic formatting
 
         elif isinstance(block, Table):
             new_table = new_document.add_table(rows=len(block.rows)*2, cols=len(block.columns))
