@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 
 import enchant
+import csv
 
 d = enchant.Dict("en_US")
 word = "Hello"
@@ -76,6 +77,7 @@ def pali_transform(text: str) -> tuple:
         if word.endswith((',', '.', '?', '!', ':', ';')):
             pmark = word[-1]
             word = word.rstrip(pmark)
+            words[i] = word
 
         if any(char in word for char in pali_chars_en):
             word = word.replace("-","")
@@ -101,7 +103,7 @@ def pali_transform(text: str) -> tuple:
 
                     From within this transliteration, find the transliteration of {word.lower()}. Do this from within the transliteration that I provided.
 
-                    Respond the transliterated output in devnagiri script in a single word.
+                    Respond in only a single word, the transliterated output in devnagiri script.
                     """
 
                     # Generate the response using the GPT-3.5 model
@@ -126,13 +128,14 @@ def pali_transform(text: str) -> tuple:
 
                     # Print the generated response
                     print(generated_text, "from partial match")
+                    # Append the generated_text, smallest_key, and corresponding Hindi translation to partial_matches.csv
+                    with open('partial_matches.csv', 'a', encoding='utf-8', newline='') as file:
+                        writer = csv.writer(file)
+                        writer.writerow([generated_text, smallest_key, pali_dict_en_to_hi[smallest_key]])
 
-        elif not d.check(word):
-            try:
-                words[i] = pali_dict_en_to_hi[word.lower()]
-                words[i] = '<span class="notranslate">' + words[i] + "</span>"
-            except:
-                pass
+        elif not d.check(word) and word.lower() in pali_dict_en_to_hi.keys():
+            words[i] = pali_dict_en_to_hi[word.lower()]
+            words[i] = '<span class="notranslate">' + words[i] + "</span>"
         
         words[i] = words[i] + pmark
     text = ' '.join(words)
