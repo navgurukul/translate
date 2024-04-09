@@ -65,5 +65,11 @@ Contributions to this project are welcome. To contribute, please follow these st
 ## Key Files
 (Documentation Inside)
 
+script.py (every time)
+To translate an existing docx file
+
+generate_pali_dictionary.py (one time)
+To generate Pali feels from tipitaka-xml
+
 generate-translation-pairs-from-two-different-texts.py
-script.py
+Generate translation pairs from two different Word files, and then align them using tkinter library (To generate pairs for further training of the algorithm)
