@@ -24,7 +24,7 @@ from docx.oxml.table import CT_Tbl
 from docx.table import _Cell, Table
 from docx.text.paragraph import Paragraph
 
-from translation import translate_text
+from translation import translate_text_wrapper
 
 import sys
 from docx import Document
@@ -55,7 +55,7 @@ def iter_block_items(parent):
             yield Table(child, parent)
 
 
-def process_doc(input_filename, output_filename, target_language):
+def process_doc(input_filename, output_filename, input_language, target_language):
     """
     Reads a docx file in order, replacing characters with spaces randomly,
     and creates a new doc with the updated content.
@@ -111,7 +111,7 @@ def process_doc(input_filename, output_filename, target_language):
                     if i%2==0:
                         cell.text = table_values[new_i][j][0]
                     else:
-                        cell.text = '\n'+translate_text(table_values[new_i][j][0], target_language)
+                        cell.text = '\n'+translate_text_wrapper(table_values[new_i][j][0], source_language, target_language)
 
         pbar.update(1)
         
@@ -130,7 +130,7 @@ def read_secret_key():
 if __name__ == '__main__':
     # Check if the correct number of command line arguments is provided
     if len(sys.argv) < 3:
-        print("Usage: python script.py input_file output_file [target_language]")
+        print("Usage: python script.py input_file output_file [source_language] [target_language]")
         sys.exit(1)
 
     # Extract the input and output file names from command line arguments
@@ -138,7 +138,9 @@ if __name__ == '__main__':
     output_file = sys.argv[2]
 
     # Extract the target language if provided,default to 'en' if not specified
-    target_language = sys.argv[3] if len(sys.argv) > 3 else 'hindi'
+    # Extract the target language if provided,default to 'en' if not specified
+    source_language = sys.argv[3] if len(sys.argv) > 3 else 'en'
+    target_language = sys.argv[4] if len(sys.argv) > 4 else 'hi'
 
     # Call the function to output the translation
-    process_doc(input_file, output_file, target_language)
+    process_doc(input_file, output_file, source_language, target_language)

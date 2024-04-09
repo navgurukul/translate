@@ -10,33 +10,37 @@ from dotenv import dotenv_values
 env_vars = dotenv_values('.env')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env_vars.get('GOOGLE_APPLICATION_CREDENTIALS')
 
-pre_replacements_file = 'pre-phrases.csv'
+pre_replacements_file = 'pre-phrases'
 post_replacements_file = 'post-phrases.csv'
-
-# Read the pre and post replacements from the csv files
-with open(pre_replacements_file,'r',encoding='utf-8') as csvfile:
-    reader = csv.reader(csvfile)
-    pre_replacements = {row[0]: row[1] for row in reader}
-
-with open(post_replacements_file,'r',encoding='utf-8') as csvfile:
-    reader = csv.reader(csvfile)
-    post_replacements = {row[0]: row[1] for row in reader}
+pre_replacements = {}
+post_replacements = {}
 
 # Replace the phrases in the text with the pre-defined replacements before translation
-def pre_replace_phrases(text):
+def pre_replace_phrases(text, source_language, target_language):
+    # Read the pre and post replacements from the csv files
+    if len(pre_replacements.keys()) == 0:
+        with open('pre-phrases-'+source_language+'-'+target_language+'.csv', 'r',encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            pre_replacements = {row[0]: row[1] for row in reader}
+
     for phrase,replacement in pre_replacements.items():
         text = text.replace(phrase,replacement)
 
     return text
 
 # Replace the phrases in the text with the replacements post automatic translation
-def post_replace_phrases(text):
+def post_replace_phrases(text, source_language, target_language):
+    if len(post_replacements.keys()) == 0:
+        with open('post-phrases-'+source_language+'-'+target_language+'.csv','r',encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            post_replacements = {row[0]: row[1] for row in reader}
+
     for phrase,replacement in post_replacements.items():
         text = text.replace(phrase,replacement)
 
     return text
 
-def translate_text(text,target_language='hindi') -> translate.TranslationServiceClient:
+def translate_text_wrapper(text, source_language='en',target_language='hi') -> translate.TranslationServiceClient:
     """Translating Text."""
 
     if text.strip() == '':
@@ -46,10 +50,7 @@ def translate_text(text,target_language='hindi') -> translate.TranslationService
 
     text = pali_transform(text)
 
-    text = pre_replace_phrases(text)
-
-    if target_language == 'hindi':
-        target_language = 'hi'
+    text = pre_replace_phrases(text, source_language, target_language)
 
     client = translate.TranslationServiceClient()
     location = "us-central1"
@@ -72,7 +73,7 @@ def translate_text(text,target_language='hindi') -> translate.TranslationService
 
     translated_text = response.translations[0].translated_text
     # translated_text = "Translated String: " + text
-    translated_text = post_replace_phrases(translated_text).replace('\n','').replace('<span class="notranslate">','').replace('</span>','')
+    translated_text = post_replace_phrases(translated_text, source_language, target_language).replace('\n','').replace('<span class="notranslate">','').replace('</span>','')
     # replace all occurences of ascii characters like &#39 to the corresponding character
 
     translated_text = html.unescape(translated_text)

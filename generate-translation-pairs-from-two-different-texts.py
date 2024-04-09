@@ -70,7 +70,7 @@ from docx.text.paragraph import Paragraph
 import sys
 from tokenizer import get_sentences
 import json
-from translation import translate_text
+from translation import translate_text_wrapper
 
 def iter_block_items(parent):
     """
@@ -133,7 +133,7 @@ def process_doc(source_filename, target_filename, output_filename, source_langua
     # Iterate through each source sentence
     for i, source_sentence in enumerate(source_sentences):
         # Translate the current sentence
-        translated_sentence = translate_text(source_sentence)
+        translated_sentence = translate_text_wrapper(source_sentence)
 
         # Append the translated sentence to the list
         translated_sentences.append(translated_sentence)
