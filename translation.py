@@ -48,7 +48,7 @@ def translate_text_wrapper(text, source_language='en',target_language='hi') -> t
 
     project_id = "34917283366"
 
-    text = pali_transform(text)
+    text = pali_transform(text, source_language, target_language)
 
     text = pre_replace_phrases(text, source_language, target_language)
 
