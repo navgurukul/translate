@@ -2,18 +2,19 @@
 import os
 import xml.etree.ElementTree as ET
 import csv
-from ai4bharat.transliteration import XlitEngine
-import random
 
 # Define paths
 path1 = "tipitaka-xml/romn"
-path2 = "tipitaka-xml/deva"
+lang_to = "taml"
+path2 = "tipitaka-xml/"+lang_to
 
-e = XlitEngine(src_script_type="indic", rescore=False)
-out = e.translit_word("नमस्ते", lang_code="hi", topk=1)[0]
 pairs = {}
 
+# hindi
 exclude_files = ["abh03m10.mul.xml","s0403a.att.xml","s0403t.tik.xml","s0402a.att.xml","s0402m1.mul.xml","s0402m2.mul.xml","s0402m3.mul.xml","s0402t.tik.xml","s0404a.att.xml","s0404m1.mul.xml","s0404m2.mul.xml","s0404m3.mul.xml","s0404m4.mul.xml","s0404t.tik.xml"]
+
+# tamil
+exclude_files = ["s0404m3.mul.xml"]
 
 # Loop through files in path1
 for filename in os.listdir(path1):
@@ -28,7 +29,10 @@ for filename in os.listdir(path1):
     # Parse XML files and get root elements
     tree1 = ET.parse(filepath1)
     root1 = tree1.getroot()
-    tree2 = ET.parse(filepath2)
+    try:
+        tree2 = ET.parse(filepath2)
+    except:
+        continue
     root2 = tree2.getroot()
 
     # Initialize dictionary
@@ -82,7 +86,7 @@ for filename in os.listdir(path1):
         pairs[key] = list(set(pairs[key]))
 
 # Write dictionary to CSV file
-with open("pali_pairs" + ".csv", "w", encoding="utf-8") as csvfile:
+with open("pali_pairs_" + lang_to[:2] + ".csv", "w", encoding="utf-8") as csvfile:
     # write pairs in a csv file, with the first column being the key, and the values array across multiple columns
     writer = csv.writer(csvfile)
     for key, value in pairs.items():
