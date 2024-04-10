@@ -55,7 +55,7 @@ def iter_block_items(parent):
             yield Table(child, parent)
 
 
-def process_doc(input_filename, output_filename, input_language, target_language):
+def process_doc(input_filename, output_filename, input_language, target_language, model="google"):
     """
     Reads a docx file in order, replacing characters with spaces randomly,
     and creates a new doc with the updated content.
@@ -78,7 +78,7 @@ def process_doc(input_filename, output_filename, input_language, target_language
             new_run.bold = block.runs[0].bold  # Preserve bold formatting
             new_run.italic = block.runs[0].italic  # Preserve italic formatting
 
-            new_run = new_paragraph.add_run('\n'+translate_text_wrapper(block.text, source_language, target_language))
+            new_run = new_paragraph.add_run('\n'+translate_text_wrapper(block.text, source_language, target_language), model)
             new_run.font.name = block.runs[0].font.name  # Preserve font
             new_run.font.color.rgb = RGBColor(0,128,0)
             new_run.font.size = block.runs[0].font.size  # Preserve font size
@@ -111,7 +111,7 @@ def process_doc(input_filename, output_filename, input_language, target_language
                     if i%2==0:
                         cell.text = table_values[new_i][j][0]
                     else:
-                        cell.text = '\n'+translate_text_wrapper(table_values[new_i][j][0], source_language, target_language)
+                        cell.text = '\n'+translate_text_wrapper(table_values[new_i][j][0], source_language, target_language, model)
 
         pbar.update(1)
         
@@ -142,5 +142,7 @@ if __name__ == '__main__':
     source_language = sys.argv[3] if len(sys.argv) > 3 else 'en'
     target_language = sys.argv[4] if len(sys.argv) > 4 else 'hi'
 
+    model = sys.argv[5] if len(sys.argv) > 5 else 'google'
+
     # Call the function to output the translation
-    process_doc(input_file, output_file, source_language, target_language)
+    process_doc(input_file, output_file, source_language, target_language, model)

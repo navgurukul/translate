@@ -42,7 +42,7 @@ def post_replace_phrases(text, source_language, target_language):
 
     return text
 
-def translate_text_wrapper(text, source_language='en',target_language='hi') -> translate.TranslationServiceClient:
+def translate_text_wrapper(text, source_language='en',target_language='hi', model='google') -> translate.TranslationServiceClient:
     """Translating Text."""
 
     if text.strip() == '':
@@ -50,7 +50,6 @@ def translate_text_wrapper(text, source_language='en',target_language='hi') -> t
 
     project_id = "34917283366"
 
-    print(source_language, target_language)
 
     text = pali_transform(text, source_language, target_language)
 
@@ -58,25 +57,11 @@ def translate_text_wrapper(text, source_language='en',target_language='hi') -> t
 
     client = translate.TranslationServiceClient()
 
-    if target_language=='hi':
-        # This one is a custom trained model in Hindi and wouldn't work for other languages.
-        location = "us-central1"
-        model = f"projects/{project_id}/locations/{location}/models/NM0ef5e2f059b5ad73"
-        parent = f"projects/{project_id}/locations/{location}"
-
-        # Translate text from source_language to target_language
-        response = client.translate_text(
-            request={
-                "parent": parent,
-                "contents": [text],
-                "model": model,
-                "mime_type": "text/html", # mime types: text/plain,text/html
-                "source_language_code": "en",
-                "target_language_code": target_language,
-            }
-        )
-    else:
-            location = "global"
+    if model=='google':
+        if target_language=='hi':
+            # This one is a custom trained model in Hindi and wouldn't work for other languages.
+            location = "us-central1"
+            model = f"projects/{project_id}/locations/{location}/models/NM0ef5e2f059b5ad73"
             parent = f"projects/{project_id}/locations/{location}"
 
             # Translate text from source_language to target_language
@@ -84,12 +69,29 @@ def translate_text_wrapper(text, source_language='en',target_language='hi') -> t
                 request={
                     "parent": parent,
                     "contents": [text],
+                    "model": model,
                     "mime_type": "text/html", # mime types: text/plain,text/html
-                    "source_language_code": "en-US",
+                    "source_language_code": "en",
                     "target_language_code": target_language,
                 }
             )
+        else:
+                location = "global"
+                parent = f"projects/{project_id}/locations/{location}"
 
+                # Translate text from source_language to target_language
+                response = client.translate_text(
+                    request={
+                        "parent": parent,
+                        "contents": [text],
+                        "mime_type": "text/html", # mime types: text/plain,text/html
+                        "source_language_code": "en-US",
+                        "target_language_code": target_language,
+                    }
+                )
+    else:
+        print("Model not supported:", model)
+        return
 
     translated_text = response.translations[0].translated_text
     # translated_text = "Translated String: " + text
