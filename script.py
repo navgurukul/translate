@@ -78,7 +78,7 @@ def process_doc(input_filename, output_filename, input_language, target_language
             new_run.bold = block.runs[0].bold  # Preserve bold formatting
             new_run.italic = block.runs[0].italic  # Preserve italic formatting
 
-            new_run = new_paragraph.add_run('\n'+translate_text(block.text, target_language))
+            new_run = new_paragraph.add_run('\n'+translate_text_wrapper(block.text, source_language, target_language))
             new_run.font.name = block.runs[0].font.name  # Preserve font
             new_run.font.color.rgb = RGBColor(0,128,0)
             new_run.font.size = block.runs[0].font.size  # Preserve font size

@@ -18,6 +18,7 @@ post_replacements = {}
 # Replace the phrases in the text with the pre-defined replacements before translation
 def pre_replace_phrases(text, source_language, target_language):
     # Read the pre and post replacements from the csv files
+    global pre_replacements
     if len(pre_replacements.keys()) == 0:
         with open('pre-phrases-'+source_language+'-'+target_language+'.csv', 'r',encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
@@ -30,6 +31,7 @@ def pre_replace_phrases(text, source_language, target_language):
 
 # Replace the phrases in the text with the replacements post automatic translation
 def post_replace_phrases(text, source_language, target_language):
+    global post_replacements
     if len(post_replacements.keys()) == 0:
         with open('post-phrases-'+source_language+'-'+target_language+'.csv','r',encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
@@ -48,28 +50,46 @@ def translate_text_wrapper(text, source_language='en',target_language='hi') -> t
 
     project_id = "34917283366"
 
+    print(source_language, target_language)
+
     text = pali_transform(text, source_language, target_language)
 
     text = pre_replace_phrases(text, source_language, target_language)
 
     client = translate.TranslationServiceClient()
-    location = "us-central1"
-    model = f"projects/{project_id}/locations/{location}/models/NM0ef5e2f059b5ad73"
-    parent = f"projects/{project_id}/locations/{location}"
 
-    print(text)
+    if target_language=='hi':
+        # This one is a custom trained model in Hindi and wouldn't work for other languages.
+        location = "us-central1"
+        model = f"projects/{project_id}/locations/{location}/models/NM0ef5e2f059b5ad73"
+        parent = f"projects/{project_id}/locations/{location}"
 
-    # Translate text from source_language to target_language
-    response = client.translate_text(
-        request={
-            "parent": parent,
-            "contents": [text],
-            "model": model,
-            "mime_type": "text/html", # mime types: text/plain,text/html
-            "source_language_code": "en",
-            "target_language_code": target_language,
-        }
-    )
+        # Translate text from source_language to target_language
+        response = client.translate_text(
+            request={
+                "parent": parent,
+                "contents": [text],
+                "model": model,
+                "mime_type": "text/html", # mime types: text/plain,text/html
+                "source_language_code": "en",
+                "target_language_code": target_language,
+            }
+        )
+    else:
+            location = "global"
+            parent = f"projects/{project_id}/locations/{location}"
+
+            # Translate text from source_language to target_language
+            response = client.translate_text(
+                request={
+                    "parent": parent,
+                    "contents": [text],
+                    "mime_type": "text/html", # mime types: text/plain,text/html
+                    "source_language_code": "en-US",
+                    "target_language_code": target_language,
+                }
+            )
+
 
     translated_text = response.translations[0].translated_text
     # translated_text = "Translated String: " + text

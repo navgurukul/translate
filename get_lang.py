@@ -26,9 +26,12 @@ def initialise_pali_dicts(source_language='en', target_language='hi'):
     # first column in pali_pairs.csv file is hindi word, and the second column is english worddef pali_transliterate_en_to_hi(text: str) -> str:
     # read pali_pairs.csv file (first column contains the hindi word, and the second column contains the corresponding english word)
     # for each row in the file, replace the english word with the hindi word
+
+    global pali_dict_source_to_target
+    global pali_dict_target_to_source
     
     if (len(pali_dict_source_to_target.keys()) == 0):
-        with open('pali_pairs'+target_language+'.csv', 'r', encoding="utf8") as file:
+        with open('pali_pairs_'+target_language+'.csv', 'r', encoding="utf8") as file:
             reader = csv.reader(file)
             for row in reader:
                 try:
@@ -98,13 +101,20 @@ def pali_transform(text: str, source_language='en', target_language='hi') -> tup
                     # Set up the OpenAI API client
                     openai.api_key = api_key
 
+                    if target_language == 'hi':
+                        lang_full = 'Hindi'
+                    elif target_language == 'ta':
+                        lang_full = 'Tamil'
+                    else:
+                        raise ValueError("Invalid target language")
+
                     # Define the prompt for the GPT-3.5 model
                     prompt = f"""
-                    Devnagiri transliteration of {smallest_key} is {pali_dict_source_to_target[smallest_key]}
+                    {lang_full} transliteration of {smallest_key} is {pali_dict_source_to_target[smallest_key]}
 
                     From within this transliteration, find the transliteration of {word.lower()}. Do this from within the transliteration that I provided.
 
-                    Respond in only a single word, the transliterated output in devnagiri script.
+                    Respond in ONE WORD, the transliterated output in {lang_full} script.
                     """
 
                     # Generate the response using the GPT-3.5 model
