@@ -144,7 +144,7 @@ def pali_transform(text: str, source_language='en', target_language='hi') -> tup
                         writer = csv.writer(file)
                         writer.writerow([generated_text, smallest_key, pali_dict_source_to_target[smallest_key]])
 
-        elif not d.check(word) and word.lower() in pali_dict_source_to_target.keys():
+        elif len(word) and (not d.check(word)) and word.lower() in pali_dict_source_to_target.keys():
             words[i] = pali_dict_source_to_target[word.lower()]
             words[i] = '<span class="notranslate">' + words[i] + "</span>"
         

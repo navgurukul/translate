@@ -101,14 +101,17 @@ def process_doc(input_filename, output_filename, input_language, target_language
                                 table_values[i][j] = [run.text + "\n", run.font.name, run.font.size, run.bold, run.italic]
                             table_values[i][j][0] = table_values[i][j][0]+run.text+"\n"
 
-                    table_values[i][j][0]=table_values[i][j][0].strip()
+                    if table_values[i][j] != None:
+                        table_values[i][j][0]=table_values[i][j][0].strip()
 
             for i,row in enumerate(new_table.rows):
                 for j, cell in enumerate(row.cells):
                     new_i = i/2
                     # convert new_i to int
                     new_i = int(new_i)
-                    if i%2==0:
+                    if table_values[new_i][j] == None:
+                        cell.text = ''
+                    elif i%2==0 or table_values[new_i][j][0].strip()=='':
                         cell.text = table_values[new_i][j][0]
                     else:
                         cell.text = '\n'+translate_text_wrapper(table_values[new_i][j][0], source_language, target_language, model)
@@ -130,7 +133,7 @@ def read_secret_key():
 if __name__ == '__main__':
     # Check if the correct number of command line arguments is provided
     if len(sys.argv) < 3:
-        print("Usage: python script.py input_file output_file [source_language] [target_language]")
+        print("Usage: python script.py input_file output_file [source_language] [target_language] [model]")
         sys.exit(1)
 
     # Extract the input and output file names from command line arguments

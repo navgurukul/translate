@@ -6,6 +6,8 @@ from get_lang import pali_transform
 import os
 import csv
 from dotenv import dotenv_values
+import random
+import time
 
 env_vars = dotenv_values('.env')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env_vars.get('GOOGLE_APPLICATION_CREDENTIALS')
@@ -62,8 +64,13 @@ def translate_text_wrapper(text, source_language='en',target_language='hi', mode
         lang_full = 'Hindi'
     elif target_language=='ta':
         lang_full = 'Tamil'
+    elif target_language=='en':
+        lang_full = 'English'
     else:
         raise ValueError("Invalid target language")
+    
+    if source_language=='en':
+        source_lang_full = "English"
 
     if model=='google':
         if target_language=='hi':
@@ -73,31 +80,51 @@ def translate_text_wrapper(text, source_language='en',target_language='hi', mode
             parent = f"projects/{project_id}/locations/{location}"
 
             # Translate text from source_language to target_language
-            response = client.translate_text(
-                request={
-                    "parent": parent,
-                    "contents": [text],
-                    "model": model,
-                    "mime_type": "text/html", # mime types: text/plain,text/html
-                    "source_language_code": "en",
-                    "target_language_code": target_language,
-                }
-            )
+            # Generate a random sleep time between 0 and 4 seconds
+            sleep_time = random.uniform(0, 3)
+
+            # Sleep for the generated time
+            time.sleep(sleep_time)
+
+            # Translate text from source_language to target_language
+            try:
+                response = client.translate_text(
+                    request={
+                        "parent": parent,
+                        "contents": [text],
+                        "model": model,
+                        "mime_type": "text/html", # mime types: text/plain,text/html
+                        "source_language_code": "en",
+                        "target_language_code": target_language,
+                    }
+                )
+            except:
+                response = {"translations": [{"translated_text": ""}]}
         else:
                 location = "global"
                 parent = f"projects/{project_id}/locations/{location}"
 
                 # Translate text from source_language to target_language
-                response = client.translate_text(
-                    request={
-                        "parent": parent,
-                        "contents": [text],
-                        "mime_type": "text/html", # mime types: text/plain,text/html
-                        "source_language_code": "en-US",
-                        "target_language_code": target_language,
-                    }
-                )
+                # Generate a random sleep time between 0 and 4 seconds
+                sleep_time = random.uniform(0, 3)
 
+                # Sleep for the generated time
+                time.sleep(sleep_time)
+
+                try:
+                    response = client.translate_text(
+                        request={
+                            "parent": parent,
+                            "contents": [text],
+                            "mime_type": "text/html", # mime types: text/plain,text/html
+                            "source_language_code": "en-US",
+                            "target_language_code": target_language,
+                        }
+                    )
+                except:
+                    response = {"translations": [{"translated_text": ""}]}
+
+        print(response)
         translated_text = response.translations[0].translated_text
 
     elif model=='gpt':
@@ -106,25 +133,45 @@ def translate_text_wrapper(text, source_language='en',target_language='hi', mode
         openai.api_key = openai_key
 
         # Define the prompt for the GPT-3.5 model
-        prompt = f"""Translate this in {lang_full}. Use language appropriate to what is used to deliver or explain Buddha's teachings \n\n {text.replace('<span class="notranslate">','').replace('</span>','')}"""
+        prompt = f"""{text.replace('<span class="notranslate">','').replace('</span>','')}"""
+        message = f"You are a translator for a book on Vipassana on Buddha's teachings. Please translate from {source_lang_full} to {lang_full}. Make the translation sound as natural as possible."
+
+        print(prompt)
 
         # Generate the response using the GPT-3.5 model
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a translator for a book on Vipassana or Buddha's teachings."},
+                {"role": "system", "content": message},
                 {"role": "user", "content": prompt},
             ],
-            max_tokens=1000,
-            n=1,
-            stop=None,
             temperature=0.1,
         )
 
-        print(response.choices[0].message.content)
+        # print(response.choices[0].message.content)
 
         # Extract the generated response from the API response
         translated_text = response.choices[0].message.content.strip()
+
+    elif model=='deepl':
+        import requests
+        import json
+
+        url = "https://api-free.deepl.com/v2/translate"
+
+        payload = {
+            "auth_key": "5b7e1f1e-8b0f-6b5f-5c5d-6d3f6d3d6d3d",
+            "text": text,
+            "target_lang": target_language.upper()
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+        translated_text = response.json()['translations'][0]['text']
 
     else:
         print("Model not supported:", model)
